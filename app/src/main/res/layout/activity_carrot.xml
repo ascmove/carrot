@@ -120,6 +120,14 @@
             android:text="@string/sensitivity_std"
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
+        <CheckBox
+            android:id="@+id/run_log_checkBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:text="@string/run_log_switch"
+            android:textColor="#747474" />
+
     </LinearLayout>
 
     <TextView

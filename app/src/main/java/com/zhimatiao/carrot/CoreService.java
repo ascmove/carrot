@@ -7,6 +7,10 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.IBinder;
 
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class CoreService extends Service {
@@ -79,6 +83,20 @@ public class CoreService extends Service {
         });
         recordingThread.setName("ReadRecorderBufferThread");
         recordingThread.start();
+    }
+
+    private void runningLog() {
+        FileOutputStream fout = null;
+        try {
+            fout = openFileOutput("r.txt", MODE_APPEND);
+            try {
+                fout.write(9887);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     private void calculate(ArrayList lists) {
@@ -154,5 +172,9 @@ public class CoreService extends Service {
             audioRecord.release();//释放资源
             audioRecord = null;
         }
+        Intent intent = new Intent();
+        intent.putExtra("status", 301);
+        intent.setAction("com.zhimatiao.carrot.action.ALARM");
+        sendBroadcast(intent);
     }
 }

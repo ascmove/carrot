@@ -8,13 +8,25 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
+import android.os.SystemClock;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.RECORD_AUDIO;
@@ -28,12 +40,16 @@ public class CarrotActivity extends Activity {
     private TextView mTextViewServiceStatus = null;
     private Button mButton = null;
     private Button mButtonStop = null;
+    private CheckBox runLogCheckbox = null;
     private MsgReceiver msgReceiver;
     private Intent intentAnalyseService;
     private Intent intentCoreService;
     public CarrotActivity mCarrotActivity;
     private int serviceRuning = 0;
     private boolean doNotEditView = false;
+    private FileWriter fw = null;
+    private BufferedWriter writer = null;
+    private boolean runLogEnable = false;
 
     /**
      * 广播接收器
@@ -48,12 +64,25 @@ public class CarrotActivity extends Activity {
             if (action == "com.zhimatiao.carrot.action.ALARM") {
                 int status = intent.getIntExtra("status", 0);
                 if (status == 800) {
+                    String timestamp = System.currentTimeMillis() + "";
+                    logEvent(timestamp + " -1 1");
                     Thread vibratorThread = new Thread(new Runnable() {
                         @Override
                         public void run() {
+                            stopService(intentCoreService);
+                            logEnd();
+                            runLogCheckbox.setClickable(true);
                             Vibrator vibrator = (Vibrator) mCarrotActivity.getSystemService(mCarrotActivity.VIBRATOR_SERVICE);
                             long[] pattern = {10, 400, 300, 400, 300}; // OFF/ON/OFF/ON
                             vibrator.vibrate(pattern, -1);
+                            try {
+                                Thread.sleep(1410);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            startService(intentCoreService);
+                            logStart();
+                            runLogCheckbox.setClickable(false);
                         }
                     });
                     vibratorThread.setName("VibratorThread");
@@ -62,9 +91,17 @@ public class CarrotActivity extends Activity {
                 if (status == 200 && doNotEditView == false) {
                     mTextView.setText("已启动");
                 }
-                if (status == 201 && doNotEditView == false) {
+                if (status == 201) {
                     double avg = intent.getDoubleExtra("data", 0.00);
-                    mTextViewServiceStatus.setText("特征强度：" + String.format("%.4f", avg));
+                    String timestamp = System.currentTimeMillis() + "";
+                    logEvent(timestamp + " " + String.format("%.6f", avg) + " 0");
+                    if (doNotEditView == false) {
+                        mTextViewServiceStatus.setText("特征强度：" + String.format("%.4f", avg));
+                    }
+                }
+                if (status == 301 && doNotEditView == false) {
+                    mTextView.setText("服务未启动");
+                    mTextViewServiceStatus.setText("特征强度：--");
                 }
             }
             if (action == "android.intent.action.SCREEN_OFF") {
@@ -122,6 +159,15 @@ public class CarrotActivity extends Activity {
                     onClickButtonStop();
                 }
             });
+            //通过控件的ID来得到代表控件的对象
+            runLogCheckbox = (CheckBox) findViewById(R.id.run_log_checkBox);
+            //给CheckBox设置事件监听
+            runLogCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    runLogEnable = isChecked;
+                }
+            });
         }
     }
 
@@ -131,6 +177,8 @@ public class CarrotActivity extends Activity {
 //        startService(intentAnalyseService);
             intentCoreService = new Intent(CarrotActivity.this, CoreService.class);
             startService(intentCoreService);
+            logStart();
+            runLogCheckbox.setClickable(false);
             mTextView.setText("启动中");
             serviceRuning = 1;
         } else {
@@ -141,12 +189,59 @@ public class CarrotActivity extends Activity {
     private void onClickButtonStop() {
         if (serviceRuning == 1) {
             stopService(intentCoreService);
-            mTextView.setText("服务未启动");
-            mTextViewServiceStatus.setText("特征强度：--");
+            logEnd();
+            runLogCheckbox.setClickable(true);
             serviceRuning = 0;
         } else {
-            mTextViewServiceStatus.setText("特征强度：--");
             Toast.makeText(mCarrotActivity, "服务未启动", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void logStart() {
+        if (runLogEnable) {
+            if (writer == null && fw == null) {
+                DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                String time = formatter.format(new Date());
+                String fileName = "/app-" + time + ".log";
+                try {
+                    File f = new File(mCarrotActivity.getExternalFilesDir("logs").getPath() + fileName);
+                    if (!f.exists()) {
+                        f.createNewFile();
+                    }
+                    fw = new FileWriter(f, true);
+                    writer = new BufferedWriter(fw);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void logEnd() {
+        if (runLogEnable) {
+            if (writer != null && fw != null) {
+                try {
+                    writer.flush();
+                    fw.close();
+                    writer.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                writer = null;
+                fw = null;
+            }
+        }
+    }
+
+    private void logEvent(String s) {
+        if (runLogEnable) {
+            if (writer != null && fw != null) {
+                try {
+                    writer.append(s + "\r\n");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

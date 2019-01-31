@@ -30,9 +30,9 @@ public class AnalyseService extends Service {
             @Override
             public void run() {
                 String sd_card = Environment.getExternalStorageDirectory().toString();
-//                String file = sd_card + "/1carrot/2m.16k.wav";
-//                String file = sd_card + "/1carrot/44m.16k.wav";
-                String file = sd_card + "/1carrot/14m.wav";
+//                String file = sd_card + "/carrot/2m.16k.wav";
+//                String file = sd_card + "/carrot/44m.16k.wav";
+                String file = sd_card + "/carrot/14m.wav";
                 try {
                     InputStream fileIn = new FileInputStream(file);
                     BufferedInputStream in = new BufferedInputStream(fileIn, 1048576);

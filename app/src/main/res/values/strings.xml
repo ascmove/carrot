@@ -11,4 +11,5 @@
     <string name="sensitivity_avg">灵敏度α：0.02</string>
     <string name="sensitivity_std">灵敏度β：5-8</string>
     <string name="copyright">芝麻创意\nhttps://dist.apache.org/carrot</string>
+    <string name="run_log_switch">启用日志</string>
 </resources>
