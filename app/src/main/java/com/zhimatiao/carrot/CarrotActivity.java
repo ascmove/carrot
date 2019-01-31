@@ -1,14 +1,15 @@
 package com.zhimatiao.carrot;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.view.View;
@@ -20,22 +21,24 @@ import android.widget.Toast;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+//import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+//import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 import static android.Manifest.permission.RECORD_AUDIO;
-import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 public class CarrotActivity extends Activity {
 
     private static final int REQUEST_RECORD_AUDIO = 670049;
     private boolean NOT_SUPPORT = false;
+    private boolean runLogEnable = false;
+    private boolean doNotEditView = false;
+    private int serviceRuning = 0;
+    private int requestAudioStatus = 0;
     private TextView mTextView = null;
     private TextView mTextViewServiceStatus = null;
     private Button mButton = null;
@@ -45,11 +48,8 @@ public class CarrotActivity extends Activity {
     private Intent intentAnalyseService;
     private Intent intentCoreService;
     public CarrotActivity mCarrotActivity;
-    private int serviceRuning = 0;
-    private boolean doNotEditView = false;
     private FileWriter fw = null;
     private BufferedWriter writer = null;
-    private boolean runLogEnable = false;
 
     /**
      * 广播接收器
@@ -137,9 +137,9 @@ public class CarrotActivity extends Activity {
         }
 
         // 检查与请求必要权限
-        boolean audioPrimission = mayRequestRecordAudio();
-        requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE}, 122211);
-        requestPermissions(new String[]{READ_EXTERNAL_STORAGE}, 211122);
+        requestPermissions(new String[]{RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+//        requestPermissions(new String[]{WRITE_EXTERNAL_STORAGE}, 122211);
+//        requestPermissions(new String[]{READ_EXTERNAL_STORAGE}, 211122);
 
         if (!NOT_SUPPORT) {
             //绑定按钮事件
@@ -171,7 +171,31 @@ public class CarrotActivity extends Activity {
         }
     }
 
+    private void showRecordPermissionAlert(Context context) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.permission_title);
+        builder.setMessage(R.string.permission_tip);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                requestPermissions(new String[]{RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
+            }
+        });
+        builder.setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                System.exit(0);
+            }
+        });
+        builder.show();
+    }
+
     private void onClickButtonRun() {
+        if (requestAudioStatus != 1) {
+            showRecordPermissionAlert(mCarrotActivity);
+            return;
+        }
         if (serviceRuning == 0) {
 //        intentAnalyseService = new Intent(CarrotActivity.this, AnalyseService.class);
 //        startService(intentAnalyseService);
@@ -209,7 +233,8 @@ public class CarrotActivity extends Activity {
                         f.createNewFile();
                     }
                     fw = new FileWriter(f, true);
-                    writer = new BufferedWriter(fw);
+                    writer = new BufferedWriter(fw, 9000);
+                    writer.append("\r\n" + time + "Carrot running log start:\r\n");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -252,10 +277,11 @@ public class CarrotActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_RECORD_AUDIO) {
             if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
+                requestAudioStatus = 1;
             }
             if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
-
+                requestAudioStatus = -1;
+                showRecordPermissionAlert(mCarrotActivity);
             }
         }
     }

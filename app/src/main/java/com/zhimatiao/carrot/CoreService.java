@@ -7,7 +7,6 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.IBinder;
 
-import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -83,20 +82,6 @@ public class CoreService extends Service {
         });
         recordingThread.setName("ReadRecorderBufferThread");
         recordingThread.start();
-    }
-
-    private void runningLog() {
-        FileOutputStream fout = null;
-        try {
-            fout = openFileOutput("r.txt", MODE_APPEND);
-            try {
-                fout.write(9887);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
     }
 
     private void calculate(ArrayList lists) {
