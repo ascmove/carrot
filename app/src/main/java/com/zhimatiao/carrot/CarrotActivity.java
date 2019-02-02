@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,6 +33,10 @@ import java.util.Date;
 import static android.Manifest.permission.RECORD_AUDIO;
 
 public class CarrotActivity extends Activity {
+
+    // 默认配置
+    public static final boolean onStartVibratorEnable = true;
+    public static final boolean onEndVibratorEnable = true;
 
     private static final int REQUEST_RECORD_AUDIO = 670049;
     private boolean NOT_SUPPORT = false;
@@ -70,9 +75,8 @@ public class CarrotActivity extends Activity {
                         @Override
                         public void run() {
                             stopService(intentCoreService);
-                            Vibrator vibrator = (Vibrator) mCarrotActivity.getSystemService(mCarrotActivity.VIBRATOR_SERVICE);
                             long[] pattern = {10, 200, 300, 200, 300}; // OFF/ON/OFF/ON
-                            vibrator.vibrate(pattern, -1);
+                            vibrator(pattern);
                             try {
                                 Thread.sleep(1410);
                             } catch (InterruptedException e) {
@@ -158,10 +162,12 @@ public class CarrotActivity extends Activity {
             //通过控件的ID来得到代表控件的对象
             runLogCheckbox = (CheckBox) findViewById(R.id.run_log_checkBox);
             //给CheckBox设置事件监听
+            runLogCheckbox.setChecked(getSharedPreferencesrunLogState("runLogState"));
             runLogCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     runLogEnable = isChecked;
+                    setSharedPreferences("runLogState", isChecked);
                 }
             });
         }
@@ -201,6 +207,10 @@ public class CarrotActivity extends Activity {
             runLogCheckbox.setClickable(false);
             mTextView.setText("启动中");
             serviceRuning = 1;
+            if (onStartVibratorEnable) {
+                long[] pattern = {10, 50, 50, 50, 50}; // OFF/ON/OFF/ON
+                vibrator(pattern);
+            }
         } else {
             Toast.makeText(mCarrotActivity, "服务已启动", Toast.LENGTH_LONG).show();
         }
@@ -212,6 +222,10 @@ public class CarrotActivity extends Activity {
             logEnd();
             runLogCheckbox.setClickable(true);
             serviceRuning = 0;
+            if (onEndVibratorEnable) {
+                long[] pattern = {10, 200}; // OFF/ON/OFF/ON
+                vibrator(pattern);
+            }
         } else {
             Toast.makeText(mCarrotActivity, "服务未启动", Toast.LENGTH_LONG).show();
         }
@@ -264,6 +278,23 @@ public class CarrotActivity extends Activity {
                 }
             }
         }
+    }
+
+    public boolean getSharedPreferencesrunLogState(String key) {
+        SharedPreferences sp=mCarrotActivity.getPreferences(MODE_PRIVATE);
+        return sp.getBoolean(key, false);
+    }
+
+    public void setSharedPreferences(String key, boolean value) {
+        SharedPreferences sp=this.getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor=sp.edit();
+        editor.putBoolean(key, value);
+        editor.apply();
+    }
+
+    private void vibrator(long[] pattern) {
+        Vibrator vibrator = (Vibrator) mCarrotActivity.getSystemService(mCarrotActivity.VIBRATOR_SERVICE);
+        vibrator.vibrate(pattern, -1);
     }
 
     /**
