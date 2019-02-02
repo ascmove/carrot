@@ -7,26 +7,17 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.IBinder;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class CoreService extends Service {
 
-    // 设置音频采样率，44100是目前的标准
     private static int sampleRateInHz = 16000;
-    // 设置音频的录制的声道CHANNEL_IN_STEREO为双声道，CHANNEL_IN_MONO为单声道
     private static int channelConfig = AudioFormat.CHANNEL_IN_MONO;
-    // 音频数据格式:PCM 16位每个样本。保证设备支持。PCM 8位每个样本。不一定能得到设备支持。
     private static int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-    // 音频获取源
     private int audioSource = MediaRecorder.AudioSource.MIC;
-    // 缓冲区字节大小
     private int bufferSizeInBytes = 2048;
     private AudioRecord audioRecord;
-    private boolean isRecord = false;// 设置正在录制的状态
-
+    private boolean isRecord = false;
     private long[] peaks = new long[3];
     private int requestId = 1;
     private int lock = 0;
@@ -57,10 +48,7 @@ public class CoreService extends Service {
                 byte bytes[] = new byte[2];
                 ArrayList lists = new ArrayList();
                 //发送广播
-                Intent intent = new Intent();
-                intent.putExtra("status", 200);
-                intent.setAction("com.zhimatiao.carrot.action.ALARM");
-                sendBroadcast(intent);
+                broadCast(200);
                 while (isRecord == true) {
                     readsize = audioRecord.read(audiodata, 0, bufferSizeInBytes);
                     if (AudioRecord.ERROR_INVALID_OPERATION != readsize) {
@@ -100,24 +88,17 @@ public class CoreService extends Service {
     }
 
     private void callBack(double avg) {
-        Intent intentAvg = new Intent();
-        intentAvg.putExtra("status", 201);
-        intentAvg.putExtra("data", avg);
-        intentAvg.setAction("com.zhimatiao.carrot.action.ALARM");
-        sendBroadcast(intentAvg);
+        broadCast(201, avg);
         if (avg >= sensitivityThreshold && lock <= 0) {
             lock = 6;
             peaks[0] = peaks[1];
             peaks[1] = peaks[2];
             peaks[2] = requestId;
-            double mean = (peaks[0]+peaks[1]+peaks[2])/3;
-            double dst = Math.pow(peaks[0]-mean,2)+Math.pow(peaks[1]-mean,2)+Math.pow(peaks[2]-mean,2);
-            double std = Math.sqrt(dst/3);
+            double mean = (peaks[0] + peaks[1] + peaks[2]) / 3;
+            double dst = Math.pow(peaks[0] - mean, 2) + Math.pow(peaks[1] - mean, 2) + Math.pow(peaks[2] - mean, 2);
+            double std = Math.sqrt(dst / 3);
             if (std >= stdMin && std <= stdMax) {
-                Intent intent = new Intent();
-                intent.putExtra("status", 800);
-                intent.setAction("com.zhimatiao.carrot.action.ALARM");
-                sendBroadcast(intent);
+                broadCast(800);
             }
         }
         lock--;
@@ -143,6 +124,21 @@ public class CoreService extends Service {
         return s;
     }
 
+    private void broadCast(int status) {
+        Intent intent = new Intent();
+        intent.putExtra("status", status);
+        intent.setAction("com.zhimatiao.carrot.action.ALARM");
+        sendBroadcast(intent);
+    }
+
+    private void broadCast(int status, double data) {
+        Intent intent = new Intent();
+        intent.putExtra("status", status);
+        intent.putExtra("data", data);
+        intent.setAction("com.zhimatiao.carrot.action.ALARM");
+        sendBroadcast(intent);
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
@@ -157,9 +153,6 @@ public class CoreService extends Service {
             audioRecord.release();//释放资源
             audioRecord = null;
         }
-        Intent intent = new Intent();
-        intent.putExtra("status", 301);
-        intent.setAction("com.zhimatiao.carrot.action.ALARM");
-        sendBroadcast(intent);
+        broadCast(301);
     }
 }

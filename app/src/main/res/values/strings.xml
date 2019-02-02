@@ -10,7 +10,7 @@
     <string name="feature_value">特征强度：--</string>
     <string name="sensitivity_avg">灵敏度α：0.02</string>
     <string name="sensitivity_std">灵敏度β：5-8</string>
-    <string name="copyright">芝麻创意\nhttps://dist.apache.org/carrot</string>
+    <string name="copyright">芝麻创意·胡萝卜V1.0.4\n俱往矣，数风流人物，还看今朝。</string>
     <string name="run_log_switch">启用日志</string>
     <string name="permission_title">权限提醒</string>
     <string name="permission_tip">胡萝卜需要录音权限才能正常工作</string>

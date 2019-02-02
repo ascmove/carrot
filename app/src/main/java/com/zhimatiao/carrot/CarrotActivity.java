@@ -70,10 +70,8 @@ public class CarrotActivity extends Activity {
                         @Override
                         public void run() {
                             stopService(intentCoreService);
-                            logEnd();
-                            runLogCheckbox.setClickable(true);
                             Vibrator vibrator = (Vibrator) mCarrotActivity.getSystemService(mCarrotActivity.VIBRATOR_SERVICE);
-                            long[] pattern = {10, 400, 300, 400, 300}; // OFF/ON/OFF/ON
+                            long[] pattern = {10, 200, 300, 200, 300}; // OFF/ON/OFF/ON
                             vibrator.vibrate(pattern, -1);
                             try {
                                 Thread.sleep(1410);
@@ -81,8 +79,6 @@ public class CarrotActivity extends Activity {
                                 e.printStackTrace();
                             }
                             startService(intentCoreService);
-                            logStart();
-                            runLogCheckbox.setClickable(false);
                         }
                     });
                     vibratorThread.setName("VibratorThread");
@@ -284,14 +280,6 @@ public class CarrotActivity extends Activity {
                 showRecordPermissionAlert(mCarrotActivity);
             }
         }
-    }
-
-    private boolean mayRequestRecordAudio() {
-        if (checkSelfPermission(RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        }
-        requestPermissions(new String[]{RECORD_AUDIO}, REQUEST_RECORD_AUDIO);
-        return false;
     }
 
     @Override
