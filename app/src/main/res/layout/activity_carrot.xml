@@ -119,6 +119,18 @@
             android:layout_height="wrap_content"
             android:text="@string/sensitivity_std"
             android:textAppearance="?android:attr/textAppearanceSmall" />
+        <TextView
+            android:id="@+id/textview_notice_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/notice_mode"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+        <TextView
+            android:id="@+id/textview_model_vername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/model_vername"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <CheckBox
             android:id="@+id/run_log_checkBox"

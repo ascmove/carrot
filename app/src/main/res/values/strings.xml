@@ -10,10 +10,18 @@
     <string name="feature_value">特征强度：--</string>
     <string name="sensitivity_avg">灵敏度α：0.02</string>
     <string name="sensitivity_std">灵敏度β：5-8</string>
-    <string name="copyright">芝麻创意·胡萝卜V1.0.4\n俱往矣，数风流人物，还看今朝。</string>
+    <string name="model_vername">模型版本：--</string>
+    <string name="notice_mode">提醒方式：机身震动</string>
+    <string name="copyright">芝麻创意·胡萝卜V1.0.5\n俱往矣，数风流人物，还看今朝。</string>
     <string name="run_log_switch">启用日志</string>
+    <string name="updatemodel_title">模型升级</string>
+    <string name="updatemodel_tip">有新的预测模型可供下载，更新模型有助于提高识别准确度</string>
     <string name="permission_title">权限提醒</string>
-    <string name="permission_tip">胡萝卜需要录音权限才能正常工作</string>
+    <string name="permission_tip">胡萝卜需要指定的权限才能正常工作</string>
+    <string name="safetyalert_title">注意安全</string>
+    <string name="safetyalert_tip">使用有线耳机时需正确佩戴，避免缠绕发生危险</string>
     <string name="ok">好</string>
+    <string name="iknow">我已知悉</string>
     <string name="exit">退出</string>
+    <string name="later">以后再说</string>
 </resources>
