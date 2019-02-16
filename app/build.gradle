@@ -1,4 +1,9 @@
 apply plugin: 'com.android.application'
+apply plugin: 'bugly'
+bugly {
+    appId = '125efe2697'
+    appKey = 'a6c977f8-5427-431a-831d-46905e21a6bd'
+}
 
 android {
     compileSdkVersion 28
@@ -6,8 +11,8 @@ android {
         applicationId "com.zhimatiao.carrot"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 6
-        versionName "1.0.5"
+        versionCode 7
+        versionName '1.0.5.1'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
     }
