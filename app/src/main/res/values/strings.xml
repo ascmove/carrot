@@ -12,7 +12,7 @@
     <string name="sensitivity_std">灵敏度β：5-8</string>
     <string name="model_vername">模型版本：--</string>
     <string name="notice_mode">提醒方式：机身震动</string>
-    <string name="copyright">芝麻创意·胡萝卜V1.0.5\n俱往矣，数风流人物，还看今朝。</string>
+    <string name="copyright">芝麻创意 · 胡萝卜 1.0.6\n彼采萧兮，一日不见，如三秋兮。</string>
     <string name="run_log_switch">启用日志</string>
     <string name="updatemodel_title">模型升级</string>
     <string name="updatemodel_tip">有新的预测模型可供下载，更新模型有助于提高识别准确度</string>
@@ -20,6 +20,8 @@
     <string name="permission_tip">胡萝卜需要指定的权限才能正常工作</string>
     <string name="safetyalert_title">注意安全</string>
     <string name="safetyalert_tip">使用有线耳机时需正确佩戴，避免缠绕发生危险</string>
+    <string name="logalert_title">注意</string>
+    <string name="logalert_tip">日志功能仅为调试功能，开启可能略微增加耗电。</string>
     <string name="ok">好</string>
     <string name="iknow">我已知悉</string>
     <string name="exit">退出</string>

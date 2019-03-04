@@ -85,6 +85,26 @@ class Alerter {
         builder.show();
     }
 
+    static void logAlert(Context context, final logAlertInterface interfaces) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.logalert_title);
+        builder.setMessage(R.string.logalert_tip);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.iknow, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                interfaces.iknow();
+            }
+        });
+        builder.setNegativeButton(R.string.exit, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                interfaces.refuse();
+            }
+        });
+        builder.show();
+    }
+
     interface showRecordPermissionAlertsInterface {
         void requestPermission();
     }
@@ -101,5 +121,10 @@ class Alerter {
 
     interface safetyAlertInterface {
         void iknow();
+    }
+
+    interface logAlertInterface {
+        void iknow();
+        void refuse();
     }
 }

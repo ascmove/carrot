@@ -140,9 +140,31 @@ public class CarrotActivity extends Activity {
         runLogCheckbox.setChecked(getSharedPreferences("featureLogState", false));
         runLogCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                featureLogEnable = isChecked;
-                setSharedPreferences("featureLogState", isChecked);
+            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+                if (isChecked) {
+                    if (!getSharedPreferences("logAlertReaded", false)) {
+                        Alerter.logAlert(mCarrotActivity, new Alerter.logAlertInterface() {
+                            @Override
+                            public void iknow() {
+                                featureLogEnable = isChecked;
+                                setSharedPreferences("featureLogState", isChecked);
+                                setSharedPreferences("logAlertReaded", true);
+                            }
+                            @Override
+                            public void refuse() {
+                                featureLogEnable = false;
+                                setSharedPreferences("featureLogState", false);
+                                runLogCheckbox.setChecked(false);
+                            }
+                        });
+                    } else {
+                        featureLogEnable = isChecked;
+                        setSharedPreferences("featureLogState", isChecked);
+                    }
+                }else {
+                    featureLogEnable = isChecked;
+                    setSharedPreferences("featureLogState", isChecked);
+                }
             }
         });
         if (calType.equals("svm") && isNetworkConnected(mCarrotActivity)) {
@@ -234,9 +256,9 @@ public class CarrotActivity extends Activity {
     private void logStart() {
         if (featureLogEnable) {
             if (writer == null && fw == null) {
-                DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:MM:DD");
+                DateFormat formatter = new SimpleDateFormat("yyyyMMddHHMMDD");
                 String time = formatter.format(new Date());
-                String fileName = "/app-" + time + ".log";
+                String fileName = "/" + time + ".log";
                 try {
                     File f = new File(mCarrotActivity.getExternalFilesDir("logs").getPath() + fileName);
                     if (!f.exists()) {
@@ -446,8 +468,9 @@ public class CarrotActivity extends Activity {
             if (action.equals("com.zhimatiao.carrot.action.ALARM")) {
                 int status = intent.getIntExtra("status", 0);
                 if (status == 800) {
-                    String timestamp = System.currentTimeMillis() + "";
-                    logEvent(timestamp + " -1 1");
+                    DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:MM:DD");
+                    String time = formatter.format(new Date());
+                    logEvent(time + " -1 1");
                     if (noticeMode == 0) {
                         // 震动提示
                         Thread vibratorThread = new Thread(new Runnable() {
@@ -479,8 +502,9 @@ public class CarrotActivity extends Activity {
                 }
                 if (status == 201) {
                     double avg = intent.getDoubleExtra("data", 0.00);
-                    String timestamp = System.currentTimeMillis() + "";
-                    logEvent(timestamp + " " + String.format("%.6f", avg) + " 0");
+                    DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:MM:DD");
+                    String time = formatter.format(new Date());
+                    logEvent(time + " " + String.format("%.6f", avg) + " 0");
                     if (doNotEditView == false) {
                         mTextViewServiceStatus.setText("特征强度：" + String.format("%.4f", avg));
                     }
