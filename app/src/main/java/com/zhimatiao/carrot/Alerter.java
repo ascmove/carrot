@@ -5,6 +5,46 @@ import android.content.Context;
 import android.content.DialogInterface;
 
 class Alerter {
+    static void newWelcomeAlerts(final Context context, final newWelcomeAlertsInterface interfaces) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.newversionfunc_title);
+        builder.setMessage(R.string.newversionfunc_tip);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.iknow, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                interfaces.iknow();
+            }
+        });
+        builder.setNegativeButton(R.string.lockapp, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                interfaces.jumpActivity();
+            }
+        });
+        builder.show();
+    }
+
+    static void appKillAlerts(final Context context, final appKillAlertsInterface interfaces) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.appkill_title);
+        builder.setMessage(R.string.appkill_tip);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.ignore, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                interfaces.ignore();
+            }
+        });
+        builder.setNegativeButton(R.string.lockapp, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                interfaces.jumpActivity();
+            }
+        });
+        builder.show();
+    }
+
     static void showRecordPermissionAlerts(final Context context, final showRecordPermissionAlertsInterface interfaces) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(R.string.permission_title);
@@ -107,6 +147,16 @@ class Alerter {
 
     interface showRecordPermissionAlertsInterface {
         void requestPermission();
+    }
+
+    interface newWelcomeAlertsInterface {
+        void jumpActivity();
+        void iknow();
+    }
+
+    interface appKillAlertsInterface {
+        void ignore();
+        void jumpActivity();
     }
 
     interface showWriteSDPermissionAlertsInterface {

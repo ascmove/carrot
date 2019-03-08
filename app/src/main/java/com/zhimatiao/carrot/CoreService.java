@@ -6,6 +6,8 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.IBinder;
+import android.os.Vibrator;
+import android.util.Log;
 
 import com.zhimatiao.carrot.mfcc.MFCC;
 
@@ -13,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import static com.zhimatiao.carrot.CarrotActivity.calType;
+import static com.zhimatiao.carrot.CarrotActivity.mCarrotActivity;
 import static com.zhimatiao.carrot.CarrotActivity.serviceRuning;
 
 public class CoreService extends Service {
@@ -42,6 +45,7 @@ public class CoreService extends Service {
     private double stdMax = 8;
 
     public CoreService() {
+        Log.i("dbgcarrot", "Service create.");
     }
 
     private static double[] hanningWin(int len) {

@@ -15,6 +15,7 @@ import android.os.Looper;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -44,6 +45,7 @@ public class CarrotActivity extends Activity {
     static final boolean onEndVibratorEnable = true;
     static final String PRIVATE_KEY = "LZXYeLsCtfqrLRovecveG6DxtOFtC1KV";
     static final String calType = "std";
+    static final String lockAppUrl = "https://www.jianshu.com/p/5ab77961fef1";
     // 存入 assets中
     static String default_svm_model = "SM201902122125";
     static String svm_model_path = "";
@@ -75,6 +77,8 @@ public class CarrotActivity extends Activity {
     private Intent intentCoreService;
     private FileWriter fw = null;
     private BufferedWriter writer = null;
+    private Boolean traceMode = false;
+    public double serviceStopTime = System.currentTimeMillis();
 
     // 共享变量
     static String logsPath = "";
@@ -89,6 +93,33 @@ public class CarrotActivity extends Activity {
             }
         }
         return false;
+    }
+
+    @Override
+    protected void onResume() {
+        // TODO Auto-generated method stub
+        super.onResume();
+
+        boolean appKillHistory = getSharedPreferences("appKillHistory", false);
+        setSharedPreferences("appKillHistory", false);
+        if (appKillHistory) {
+            Alerter.appKillAlerts(mCarrotActivity, new Alerter.appKillAlertsInterface() {
+                @Override
+                public void ignore() {
+                    setSharedPreferences("appKillHistory", false);
+                }
+
+                @Override
+                public void jumpActivity() {
+                    setSharedPreferences("appKillHistory", false);
+                    Intent intent = new Intent();
+                    intent.setAction("android.intent.action.VIEW");
+                    Uri content_url = Uri.parse(lockAppUrl);
+                    intent.setData(content_url);
+                    startActivity(intent);
+                }
+            });
+        }
     }
 
     @Override
@@ -115,6 +146,17 @@ public class CarrotActivity extends Activity {
         if (ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestWriteStatus = 1;
         }
+        TextView title = (TextView) findViewById(R.id.textview_title);
+        title.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                intent.setAction("android.intent.action.VIEW");
+                Uri content_url = Uri.parse(lockAppUrl);
+                intent.setData(content_url);
+                startActivity(intent);
+            }
+        });
 
         mButton = (Button) findViewById(R.id.button);
         mButtonStop = (Button) findViewById(R.id.button_stop);
@@ -127,6 +169,17 @@ public class CarrotActivity extends Activity {
             @Override
             public void onClick(View view) {
                 onClickButtonRun();
+            }
+        });
+        mButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+//                long[] pattern = {10, 1000, 300}; // OFF/ON/OFF/ON
+//                vibrator(pattern);
+//                TextView startService = (TextView) findViewById(R.id.guide_start);
+//                startService.setText("调试模式已启用");
+//                traceMode = true;
+                return false;
             }
         });
         mButtonStop.setOnClickListener(new View.OnClickListener() {
@@ -150,6 +203,7 @@ public class CarrotActivity extends Activity {
                                 setSharedPreferences("featureLogState", isChecked);
                                 setSharedPreferences("logAlertReaded", true);
                             }
+
                             @Override
                             public void refuse() {
                                 featureLogEnable = false;
@@ -161,7 +215,7 @@ public class CarrotActivity extends Activity {
                         featureLogEnable = isChecked;
                         setSharedPreferences("featureLogState", isChecked);
                     }
-                }else {
+                } else {
                     featureLogEnable = isChecked;
                     setSharedPreferences("featureLogState", isChecked);
                 }
@@ -193,6 +247,46 @@ public class CarrotActivity extends Activity {
         }
         // 初始化共享静态变量 featureLogEnable
         featureLogEnable = getSharedPreferences("featureLogState", false);
+        // 展示新版功能提示
+        final int versionCode = Utils.getVersionCode(mCarrotActivity);
+        if (!getSharedPreferences("newWelcomeAlerts", "0").equals(versionCode + "")) {
+            Alerter.newWelcomeAlerts(mCarrotActivity, new Alerter.newWelcomeAlertsInterface() {
+                @Override
+                public void jumpActivity() {
+                    setSharedPreferences("newWelcomeAlerts", versionCode + "");
+                    Intent intent = new Intent();
+                    intent.setAction("android.intent.action.VIEW");
+                    Uri content_url = Uri.parse(lockAppUrl);
+                    intent.setData(content_url);
+                    startActivity(intent);
+                }
+
+                @Override
+                public void iknow() {
+                    setSharedPreferences("newWelcomeAlerts", versionCode + "");
+                }
+            });
+        } else {
+            boolean appKillHistory = getSharedPreferences("appKillHistory", false);
+            setSharedPreferences("appKillHistory", false);
+            if (appKillHistory) {
+                Alerter.appKillAlerts(mCarrotActivity, new Alerter.appKillAlertsInterface() {
+                    @Override
+                    public void ignore() {
+                        setSharedPreferences("appKillHistory", false);
+                    }
+
+                    @Override
+                    public void jumpActivity() {
+                        Intent intent = new Intent();
+                        intent.setAction("android.intent.action.VIEW");
+                        Uri content_url = Uri.parse(lockAppUrl);
+                        intent.setData(content_url);
+                        startActivity(intent);
+                    }
+                });
+            }
+        }
     }
 
     private void onClickButtonRun() {
@@ -240,6 +334,7 @@ public class CarrotActivity extends Activity {
 
     private void onClickButtonStop() {
         if (serviceRuning == 1) {
+            serviceStopTime = System.currentTimeMillis();
             stopService(intentCoreService);
             logEnd();
             runLogCheckbox.setClickable(true);
@@ -477,6 +572,7 @@ public class CarrotActivity extends Activity {
                             @Override
                             public void run() {
                                 stopService(intentCoreService);
+                                serviceStopTime = System.currentTimeMillis();
                                 long[] pattern = {10, 200, 300, 200, 300}; // OFF/ON/OFF/ON
                                 vibrator(pattern);
                                 try {
@@ -510,6 +606,11 @@ public class CarrotActivity extends Activity {
                     }
                 }
                 if (status == 301 && doNotEditView == false) {
+                    if (System.currentTimeMillis() - mCarrotActivity.serviceStopTime > 2000) {
+                        setSharedPreferences("appKillHistory", true);
+                        long[] pattern = {10, 1000, 1000, 1000, 10};
+                        vibrator(pattern);
+                    }
                     mTextView.setText("服务未启动");
                     mTextViewServiceStatus.setText("特征强度：--");
                 }

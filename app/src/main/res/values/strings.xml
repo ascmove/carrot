@@ -3,7 +3,7 @@
     <string name="prepare_to_record">准备开始</string>
     <string name="start">开始</string>
     <string name="holdon">停止</string>
-    <string name="app_tip">请保持APP后台驻留</string>
+    <string name="app_tip">确保胡萝卜可后台运行</string>
     <string name="start_service_tip">点击开始启动胡萝卜服务</string>
     <string name="service_started">服务未启动</string>
     <string name="stop_service">点击停止注销服务</string>
@@ -12,10 +12,14 @@
     <string name="sensitivity_std">灵敏度β：5-8</string>
     <string name="model_vername">模型版本：--</string>
     <string name="notice_mode">提醒方式：机身震动</string>
-    <string name="copyright">芝麻创意 · 胡萝卜 1.0.6\n彼采萧兮，一日不见，如三秋兮。</string>
+    <string name="copyright">芝麻创意 · 胡萝卜 1.0.7\n彼采萧兮，一日不见，如三秋兮。</string>
     <string name="run_log_switch">启用日志</string>
     <string name="updatemodel_title">模型升级</string>
     <string name="updatemodel_tip">有新的预测模型可供下载，更新模型有助于提高识别准确度</string>
+    <string name="newversionfunc_title">胡萝卜是什么</string>
+    <string name="newversionfunc_tip">胡萝卜专为受打呼噜困扰人士开发，您只需开始服务，App将会在识别出打呼噜声时进行提醒。\n\n为了不打扰其他人，您可佩戴耳机，提醒时手机将不会震动，您的耳机将会播放提示音。\n\n某些手机锁屏后可能会清理App，如胡萝卜运行一段时间后出现两次长震动，您可点下方链接查看如何锁定App。</string>
+    <string name="appkill_title">胡萝卜未正常结束工作</string>
+    <string name="appkill_tip">您上次使用的胡萝卜进程被异常结束，可能是被电源管理软件终止，您可以点击下方“锁定方法”查看如何解决此类问题；如您手动结束胡萝卜进程，清忽略此提醒。</string>
     <string name="permission_title">权限提醒</string>
     <string name="permission_tip">胡萝卜需要指定的权限才能正常工作</string>
     <string name="safetyalert_title">注意安全</string>
@@ -23,7 +27,9 @@
     <string name="logalert_title">注意</string>
     <string name="logalert_tip">日志功能仅为调试功能，开启可能略微增加耗电。</string>
     <string name="ok">好</string>
+    <string name="ignore">忽略</string>
     <string name="iknow">我已知悉</string>
     <string name="exit">退出</string>
+    <string name="lockapp">锁定方法</string>
     <string name="later">以后再说</string>
 </resources>
