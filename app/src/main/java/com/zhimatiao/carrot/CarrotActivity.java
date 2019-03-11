@@ -59,6 +59,7 @@ public class CarrotActivity extends Activity {
     static double sensitivityThresholdAuto = 0;
     // 0 手机振动 1 耳机声音
     static int noticeMode = 0;
+    static int lastNoticeMode = 0;
     static int headsetHasMic = 0;
     static int serviceRuning = 0;
     static CarrotActivity mCarrotActivity;
@@ -81,8 +82,6 @@ public class CarrotActivity extends Activity {
     private CheckBox runLogCheckbox = null;
     private CheckBox noiseAutoCheckbox = null;
     private MsgReceiver msgReceiver;
-    private Intent intentAnalyseService;
-    private Intent intentCoreService;
     private FileWriter fw = null;
     private Boolean traceMode = false;
 
@@ -131,6 +130,10 @@ public class CarrotActivity extends Activity {
                     startActivity(intent);
                 }
             });
+        }
+
+        if (serviceRuning == 1) {
+            mTextView.setText(R.string.service_is_running);
         }
     }
 
@@ -275,8 +278,7 @@ public class CarrotActivity extends Activity {
             }
         });
         if (calType.equals("svm") && isNetworkConnected(mCarrotActivity)) {
-            intentAnalyseService = new Intent(CarrotActivity.this, ModelUpdateService.class);
-            startService(intentAnalyseService);
+            startService(new Intent(CarrotActivity.this, ModelUpdateService.class));
         }
         playerManager = PlayerManager.getManager();
         String modelName = getSharedPreferences("verName", default_svm_model);
@@ -342,6 +344,15 @@ public class CarrotActivity extends Activity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        if (serviceRuning == 1) {
+            stopCore();
+        }
+        Toast.makeText(mCarrotActivity, R.string.carrot_stoped, Toast.LENGTH_LONG).show();
+        this.finish();
+    }
+
     private void onClickButtonRun() {
         if (ContextCompat.checkSelfPermission(this, RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{RECORD_AUDIO}, REQUEST_CODE_RECORD_AUDIO);
@@ -371,8 +382,7 @@ public class CarrotActivity extends Activity {
             return;
         }
         if (serviceRuning == 0) {
-            intentCoreService = new Intent(CarrotActivity.this, CoreService.class);
-            startService(intentCoreService);
+            startService(new Intent(CarrotActivity.this, CoreService.class));
             logStart();
             runLogCheckbox.setClickable(false);
             noiseAutoCheckbox.setClickable(false);
@@ -386,18 +396,22 @@ public class CarrotActivity extends Activity {
         }
     }
 
+    private void stopCore() {
+        serviceStopTime = System.currentTimeMillis();
+        stopService(new Intent(CarrotActivity.this, CoreService.class));
+        logEnd();
+        runLogCheckbox.setClickable(true);
+        noiseAutoCheckbox.setClickable(true);
+        serviceRuning = 0;
+        if (onEndVibratorEnable) {
+            long[] pattern = {10, 200}; // OFF/ON/OFF/ON
+            vibrator(pattern);
+        }
+    }
+
     private void onClickButtonStop() {
         if (serviceRuning == 1) {
-            serviceStopTime = System.currentTimeMillis();
-            stopService(intentCoreService);
-            logEnd();
-            runLogCheckbox.setClickable(true);
-            noiseAutoCheckbox.setClickable(true);
-            serviceRuning = 0;
-            if (onEndVibratorEnable) {
-                long[] pattern = {10, 200}; // OFF/ON/OFF/ON
-                vibrator(pattern);
-            }
+            stopCore();
         } else {
             Toast.makeText(mCarrotActivity, R.string.service_not_running, Toast.LENGTH_LONG).show();
         }
@@ -616,7 +630,7 @@ public class CarrotActivity extends Activity {
                         Thread vibratorThread = new Thread(new Runnable() {
                             @Override
                             public void run() {
-                                stopService(intentCoreService);
+                                stopService(new Intent(CarrotActivity.this, CoreService.class));
                                 serviceStopTime = System.currentTimeMillis();
                                 long[] pattern = {10, 200, 300, 200, 300}; // OFF/ON/OFF/ON
                                 vibrator(pattern);
@@ -626,7 +640,7 @@ public class CarrotActivity extends Activity {
                                     e.printStackTrace();
                                 }
                                 if (serviceRuning == 0) {
-                                    startService(intentCoreService);
+                                    startService(new Intent(CarrotActivity.this, CoreService.class));
                                 }
                             }
                         });
@@ -685,12 +699,15 @@ public class CarrotActivity extends Activity {
                 // https://www.cnblogs.com/android-html5/archive/2012/03/11/2534085.html
                 // todo 暂不支持蓝牙耳机
                 // 0代表拔出，1代表插入
+                int state = intent.getIntExtra("state", 0);
+                if (noticeMode == state) {
+                    return;
+                }
                 if (serviceRuning == 1) {
                     serviceStopTime = System.currentTimeMillis();
-                    stopService(intentCoreService);
-                    startService(intentCoreService);
+                    stopService(new Intent(CarrotActivity.this, CoreService.class));
+                    startService(new Intent(CarrotActivity.this, CoreService.class));
                 }
-                int state = intent.getIntExtra("state", 0);
                 headsetHasMic = intent.getIntExtra("microphone", 0);
                 if (headsetHasMic == 1) {
                     mTextViewInputSrc.setText(R.string.input_src_headset);

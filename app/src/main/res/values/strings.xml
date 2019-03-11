@@ -10,6 +10,7 @@
     <string name="service_is_running">服务已启动</string>
     <string name="service_running">已启动</string>
     <string name="stop_service">点击停止注销服务</string>
+    <string name="carrot_stoped">胡萝卜已停止运行</string>
     <string name="feature_value_empty">特征强度：--</string>
     <string name="sensitivity_avg">灵敏度α：0.02</string>
     <string name="sensitivity_std">灵敏度β：5-8</string>

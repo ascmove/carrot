@@ -11,7 +11,7 @@ android {
         applicationId "com.zhimatiao.carrot"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 12
+        versionCode 14
         versionName '1.0.8'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         multiDexEnabled true
