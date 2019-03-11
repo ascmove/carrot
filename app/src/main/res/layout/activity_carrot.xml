@@ -47,7 +47,7 @@
             android:id="@+id/textview_service_run"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/service_started"
+            android:text="@string/service_not_running"
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
     </LinearLayout>
@@ -95,7 +95,7 @@
             android:id="@+id/textview_service_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/feature_value"
+            android:text="@string/feature_value_empty"
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
     </LinearLayout>
@@ -124,10 +124,17 @@
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <TextView
+            android:id="@+id/textview_input_src"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/input_src_phone"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        <TextView
             android:id="@+id/textview_notice_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/notice_mode"
+            android:text="@string/notice_mode_phone"
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <TextView
@@ -136,6 +143,15 @@
             android:layout_height="wrap_content"
             android:text="@string/model_vername"
             android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        <CheckBox
+            android:id="@+id/noise_auto_checkBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:text="@string/noise_auto_switch"
+            android:textColor="#747474" />
 
         <CheckBox
             android:id="@+id/run_log_checkBox"

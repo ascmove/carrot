@@ -27,7 +27,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.tencent.bugly.crashreport.CrashReport;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -46,15 +45,18 @@ public class CarrotActivity extends Activity {
     static final String PRIVATE_KEY = "LZXYeLsCtfqrLRovecveG6DxtOFtC1KV";
     static final String calType = "std";
     static final String lockAppUrl = "https://www.jianshu.com/p/5ab77961fef1";
+    // 参数配置
+    static final double sensitivityThresholdDefault = 0.02;
+    static final double sensitivityThresholdHeadset = 0.05;
+    static final int REQUEST_CODE_RECORD_AUDIO = 670049;
+    static final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 670050;
     // 存入 assets中
     static String default_svm_model = "SM201902122125";
     static String svm_model_path = "";
-    static final double sensitivityThresholdDefault = 0.02;
-    static final double sensitivityThresholdHeadset = 0.05;
-
-    static final int REQUEST_CODE_RECORD_AUDIO = 670049;
-    static final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 670050;
-    PlayerManager playerManager;
+    static boolean noiseAutoMode = false;
+    static int noiseAutoNum = 340; // 约3分钟
+    static double noiseRate = 0.99;
+    static double sensitivityThresholdAuto = 0;
     // 0 手机振动 1 耳机声音
     static int noticeMode = 0;
     static int headsetHasMic = 0;
@@ -62,26 +64,27 @@ public class CarrotActivity extends Activity {
     static CarrotActivity mCarrotActivity;
     static boolean featureLogEnable = false;
     static boolean doNotEditView = false;
+    // 共享变量
+    static String logsPath = "";
+    public double serviceStopTime = System.currentTimeMillis();
+    PlayerManager playerManager;
     private int requestAudioStatus = 0;
     private int requestWriteStatus = 0;
     private TextView mTextView = null;
     private TextView mTextViewSensitivityAvg = null;
     private TextView mTextViewModelName = null;
     private TextView mTextViewNoticeMode = null;
+    private TextView mTextViewInputSrc = null;
     private TextView mTextViewServiceStatus = null;
     private Button mButton = null;
     private Button mButtonStop = null;
     private CheckBox runLogCheckbox = null;
+    private CheckBox noiseAutoCheckbox = null;
     private MsgReceiver msgReceiver;
     private Intent intentAnalyseService;
     private Intent intentCoreService;
     private FileWriter fw = null;
-    private BufferedWriter writer = null;
     private Boolean traceMode = false;
-    public double serviceStopTime = System.currentTimeMillis();
-
-    // 共享变量
-    static String logsPath = "";
 
     public static boolean isNetworkConnected(Context context) {
         if (context != null) {
@@ -93,6 +96,15 @@ public class CarrotActivity extends Activity {
             }
         }
         return false;
+    }
+
+    /**
+     * 获取APP的Context方便其他地方调用
+     *
+     * @return
+     */
+    public static Context getContext() {
+        return mCarrotActivity;
     }
 
     @Override
@@ -164,6 +176,7 @@ public class CarrotActivity extends Activity {
         mTextViewSensitivityAvg = (TextView) findViewById(R.id.textview_sensitivity_avg);
         mTextViewModelName = (TextView) findViewById(R.id.textview_model_vername);
         mTextViewNoticeMode = (TextView) findViewById(R.id.textview_notice_mode);
+        mTextViewInputSrc = (TextView) findViewById(R.id.textview_input_src);
         mTextViewServiceStatus = (TextView) findViewById(R.id.textview_service_status);
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -186,6 +199,46 @@ public class CarrotActivity extends Activity {
             @Override
             public void onClick(View view) {
                 onClickButtonStop();
+            }
+        });
+        noiseAutoCheckbox = (CheckBox) findViewById(R.id.noise_auto_checkBox);
+        if (getSharedPreferences("noiseAutoState", false)) {
+            noiseAutoMode = true;
+            mTextViewSensitivityAvg.setText("灵敏度α：0%");
+            noiseAutoCheckbox.setChecked(true);
+        }
+        noiseAutoCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+                if (isChecked) {
+                    if (!getSharedPreferences("noiseAutoReaded", false)) {
+                        Alerter.noiseAutoAlert(mCarrotActivity, new Alerter.noiseAutoInterface() {
+                            @Override
+                            public void iknow() {
+                                setSharedPreferences("noiseAutoState", isChecked);
+                                setSharedPreferences("noiseAutoReaded", true);
+                                noiseAutoMode = true;
+                                mTextViewSensitivityAvg.setText("灵敏度α：0%");
+                            }
+                        });
+                    } else {
+                        setSharedPreferences("noiseAutoState", isChecked);
+                        noiseAutoMode = true;
+                        mTextViewSensitivityAvg.setText("灵敏度α：0%");
+                    }
+                } else {
+                    noiseAutoMode = false;
+                    mTextViewSensitivityAvg.setText(R.string.sensitivity_avg);
+                }
+
+//                setSharedPreferences("noiseAutoState", isChecked);
+//                if (isChecked) {
+//                    noiseAutoMode = true;
+//                    mTextViewSensitivityAvg.setText("灵敏度α：0%");
+//                } else {
+//                    noiseAutoMode = false;
+//                    mTextViewSensitivityAvg.setText(R.string.sensitivity_avg);
+//                }
             }
         });
         runLogCheckbox = (CheckBox) findViewById(R.id.run_log_checkBox);
@@ -322,13 +375,14 @@ public class CarrotActivity extends Activity {
             startService(intentCoreService);
             logStart();
             runLogCheckbox.setClickable(false);
-            mTextView.setText("启动中");
+            noiseAutoCheckbox.setClickable(false);
+            mTextView.setText(R.string.service_starting);
             if (onStartVibratorEnable) {
                 long[] pattern = {10, 50, 50, 50, 50}; // OFF/ON/OFF/ON
                 vibrator(pattern);
             }
         } else {
-            Toast.makeText(mCarrotActivity, "服务已启动", Toast.LENGTH_LONG).show();
+            Toast.makeText(mCarrotActivity, R.string.service_is_running, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -338,30 +392,31 @@ public class CarrotActivity extends Activity {
             stopService(intentCoreService);
             logEnd();
             runLogCheckbox.setClickable(true);
+            noiseAutoCheckbox.setClickable(true);
             serviceRuning = 0;
             if (onEndVibratorEnable) {
                 long[] pattern = {10, 200}; // OFF/ON/OFF/ON
                 vibrator(pattern);
             }
         } else {
-            Toast.makeText(mCarrotActivity, "服务未启动", Toast.LENGTH_LONG).show();
+            Toast.makeText(mCarrotActivity, R.string.service_not_running, Toast.LENGTH_LONG).show();
         }
     }
 
     private void logStart() {
         if (featureLogEnable) {
-            if (writer == null && fw == null) {
-                DateFormat formatter = new SimpleDateFormat("yyyyMMddHHMMDD");
-                String time = formatter.format(new Date());
-                String fileName = "/" + time + ".log";
+            if (fw == null) {
+                Date now = new Date();
+                SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
+                String fileName = "/" + ft.format(now) + ".log";
                 try {
                     File f = new File(mCarrotActivity.getExternalFilesDir("logs").getPath() + fileName);
                     if (!f.exists()) {
                         f.createNewFile();
                     }
                     fw = new FileWriter(f, true);
-                    writer = new BufferedWriter(fw, 1024);
-                    writer.append("Carrot running log start:\r\n");
+                    fw.append("Carrot running log start:\r\n");
+                    fw.flush();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -371,15 +426,12 @@ public class CarrotActivity extends Activity {
 
     private void logEnd() {
         if (featureLogEnable) {
-            if (writer != null && fw != null) {
+            if (fw != null) {
                 try {
-                    writer.flush();
                     fw.close();
-                    writer.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                writer = null;
                 fw = null;
             }
         }
@@ -387,9 +439,10 @@ public class CarrotActivity extends Activity {
 
     private void logEvent(String s) {
         if (featureLogEnable) {
-            if (writer != null && fw != null) {
+            if (fw != null) {
                 try {
-                    writer.append(s + "\r\n");
+                    fw.append(s + "\r\n");
+                    fw.flush();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -506,6 +559,7 @@ public class CarrotActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_CODE_RECORD_AUDIO) {
             if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                onClickButtonRun();
                 requestAudioStatus = 1;
             }
             if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_DENIED) {
@@ -539,15 +593,6 @@ public class CarrotActivity extends Activity {
         unregisterReceiver(msgReceiver);
         super.onDestroy();
         logEnd();
-    }
-
-    /**
-     * 获取APP的Context方便其他地方调用
-     *
-     * @return
-     */
-    public static Context getContext() {
-        return mCarrotActivity;
     }
 
     /**
@@ -594,13 +639,13 @@ public class CarrotActivity extends Activity {
                     }
                 }
                 if (status == 200 && doNotEditView == false) {
-                    mTextView.setText("已启动");
+                    mTextView.setText(R.string.service_running);
                 }
                 if (status == 201) {
                     double avg = intent.getDoubleExtra("data", 0.00);
-                    DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:MM:DD");
-                    String time = formatter.format(new Date());
-                    logEvent(time + " " + String.format("%.6f", avg) + " 0");
+                    Date now = new Date();
+                    SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+                    logEvent(ft.format(now) + " " + String.format("%.6f", avg) + " 0");
                     if (doNotEditView == false) {
                         mTextViewServiceStatus.setText("特征强度：" + String.format("%.4f", avg));
                     }
@@ -611,8 +656,8 @@ public class CarrotActivity extends Activity {
                         long[] pattern = {10, 1000, 1000, 1000, 10};
                         vibrator(pattern);
                     }
-                    mTextView.setText("服务未启动");
-                    mTextViewServiceStatus.setText("特征强度：--");
+                    mTextView.setText(R.string.service_not_running);
+                    mTextViewServiceStatus.setText(R.string.feature_value_empty);
                 }
                 if (status == 210001) {
                     String data = intent.getStringExtra("data");
@@ -621,6 +666,13 @@ public class CarrotActivity extends Activity {
                 if (status == 210319) {
                     String data = intent.getStringExtra("data");
                     mTextViewModelName.setText(data);
+                }
+                if (status == 210421) {
+                    mTextViewSensitivityAvg.setText("灵敏度α：" + Math.round(intent.getIntExtra("data", 1) / (noiseAutoNum + 0.0) * 100) + "%");
+                }
+                if (status == 210422) {
+                    double data = intent.getDoubleExtra("data", 0.05);
+                    mTextViewSensitivityAvg.setText("灵敏度α：" + data);
                 }
             }
             if (action.equals("android.intent.action.SCREEN_OFF")) {
@@ -634,31 +686,42 @@ public class CarrotActivity extends Activity {
                 // todo 暂不支持蓝牙耳机
                 // 0代表拔出，1代表插入
                 if (serviceRuning == 1) {
+                    serviceStopTime = System.currentTimeMillis();
                     stopService(intentCoreService);
                     startService(intentCoreService);
                 }
                 int state = intent.getIntExtra("state", 0);
                 headsetHasMic = intent.getIntExtra("microphone", 0);
                 if (headsetHasMic == 1) {
-                    mTextViewSensitivityAvg.setText("灵敏度α：" + sensitivityThresholdHeadset);
+                    mTextViewInputSrc.setText(R.string.input_src_headset);
+                    // 处理自适应降噪环节
+                    if (!noiseAutoMode) {
+                        mTextViewSensitivityAvg.setText("灵敏度α：" + sensitivityThresholdHeadset);
+                    }
                 }
                 if (state == 0) {
+                    // 耳机移除
                     noticeMode = 0;
-                    mTextViewNoticeMode.setText("提醒方式：机身震动");
-                    mTextViewSensitivityAvg.setText("灵敏度α：" + sensitivityThresholdDefault);
+                    mTextViewInputSrc.setText(R.string.input_src_phone);
+                    mTextViewNoticeMode.setText(R.string.notice_mode_phone);
+                    // 处理自适应降噪环节
+                    if (!noiseAutoMode) {
+                        mTextViewSensitivityAvg.setText("灵敏度α：" + sensitivityThresholdDefault);
+                    }
                 } else if (state == 1) {
+                    // 耳机插入
                     if (!getSharedPreferences("safetyAlertReaded", false)) {
                         Alerter.safetyAlert(mCarrotActivity, new Alerter.safetyAlertInterface() {
                             @Override
                             public void iknow() {
                                 setSharedPreferences("safetyAlertReaded", true);
                                 noticeMode = 1;
-                                mTextViewNoticeMode.setText("提醒方式：耳机铃声");
+                                mTextViewNoticeMode.setText(R.string.notice_mode_headset);
                             }
                         });
                     } else {
                         noticeMode = 1;
-                        mTextViewNoticeMode.setText("提醒方式：耳机铃声");
+                        mTextViewNoticeMode.setText(R.string.notice_mode_headset);
                     }
                 }
             }

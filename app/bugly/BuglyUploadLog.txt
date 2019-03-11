@@ -74,3 +74,11 @@ file=C:\Users\ching\carrot\app\build\outputs\mapping\release\mapping.txt
 sha1=f7e974c44f905276889962ad3d99daafbb4f8132
 appId=125efe2697
 
+file=C:\Users\ching\carrot\app\build\outputs\mapping\release\mapping.txt
+sha1=a8516280318ff9a2e8626ce9918f78dbb7610941
+appId=125efe2697
+
+file=C:\Users\ching\carrot\app\build\outputs\mapping\release\mapping.txt
+sha1=c25aae4ff5d253ec2dfb2fec4c2240235ac27064
+appId=125efe2697
+

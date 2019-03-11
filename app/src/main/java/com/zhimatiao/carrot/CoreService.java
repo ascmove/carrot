@@ -44,6 +44,10 @@ public class CoreService extends Service {
     private double stdMin = 5;
     private double stdMax = 8;
 
+    // for autoMode
+    private double[] noiseBuffer = new double[CarrotActivity.noiseAutoNum];
+    private int noiseBufferP = 0;
+
     public CoreService() {
         Log.i("dbgcarrot", "Service create.");
     }
@@ -93,7 +97,7 @@ public class CoreService extends Service {
 
     private static String dumpFeature(double[] f) {
         String s = "";
-        for (double t:f) {
+        for (double t : f) {
             s += " " + String.format("%.4f", t);
         }
         return s;
@@ -113,6 +117,7 @@ public class CoreService extends Service {
         super.onCreate();
         if (serviceRuning == 0) {
             if (CarrotActivity.noticeMode == 1) {
+                // 耳机提醒模式
                 if (CarrotActivity.headsetHasMic == 0) {
                     audioSource = MediaRecorder.AudioSource.CAMCORDER;
                 } else {
@@ -240,9 +245,38 @@ public class CoreService extends Service {
         }
     }
 
+    private double[] bubbleSort(double[] arr) {
+        for (int i = 0; i < arr.length - 1; i++) {//外层循环控制排序趟数
+            for (int j = 0; j < arr.length - 1 - i; j++) {//内层循环控制每一趟排序多少次
+                if (arr[j] > arr[j + 1]) {
+                    double temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                }
+            }
+        }
+        return arr;
+    }
+
     private void callBackAvg(double avg) {
         if (CarrotActivity.doNotEditView == false) {
             broadCast(201, avg);
+        }
+        if (CarrotActivity.noiseAutoMode) {
+            if (noiseBufferP < CarrotActivity.noiseAutoNum) {
+                noiseBuffer[noiseBufferP] = avg;
+                noiseBufferP++;
+                broadCast(210421, noiseBufferP);
+            } else {
+                // 计算阈值
+                CarrotActivity.noiseAutoMode = false;
+                double tmp = (CarrotActivity.noiseAutoNum - 1) * CarrotActivity.noiseRate;
+                int idx = (int) tmp;
+                noiseBuffer = bubbleSort(noiseBuffer);
+                tmp = (double) Math.round(noiseBuffer[idx] * 1000) / 1000;
+                broadCast(210422, (double) Math.round(tmp * 1000) / 1000);
+                sensitivityThreshold = tmp;
+            }
         }
         if (avg >= sensitivityThreshold && lock <= 0) {
             lock = 6;
@@ -287,6 +321,14 @@ public class CoreService extends Service {
     }
 
     private void broadCast(int status, double data) {
+        Intent intent = new Intent();
+        intent.putExtra("status", status);
+        intent.putExtra("data", data);
+        intent.setAction("com.zhimatiao.carrot.action.ALARM");
+        sendBroadcast(intent);
+    }
+
+    private void broadCast(int status, int data) {
         Intent intent = new Intent();
         intent.putExtra("status", status);
         intent.putExtra("data", data);

@@ -127,7 +127,7 @@ class Alerter {
 
     static void logAlert(Context context, final logAlertInterface interfaces) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(R.string.logalert_title);
+        builder.setTitle(R.string.attention);
         builder.setMessage(R.string.logalert_tip);
         builder.setCancelable(false);
         builder.setPositiveButton(R.string.iknow, new DialogInterface.OnClickListener() {
@@ -145,17 +145,33 @@ class Alerter {
         builder.show();
     }
 
+    static void noiseAutoAlert(Context context, final noiseAutoInterface interfaces) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.attention);
+        builder.setMessage(R.string.noise_auto_tip);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.iknow, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                interfaces.iknow();
+            }
+        });
+        builder.show();
+    }
+
     interface showRecordPermissionAlertsInterface {
         void requestPermission();
     }
 
     interface newWelcomeAlertsInterface {
         void jumpActivity();
+
         void iknow();
     }
 
     interface appKillAlertsInterface {
         void ignore();
+
         void jumpActivity();
     }
 
@@ -175,6 +191,11 @@ class Alerter {
 
     interface logAlertInterface {
         void iknow();
+
         void refuse();
+    }
+
+    interface noiseAutoInterface {
+        void iknow();
     }
 }
